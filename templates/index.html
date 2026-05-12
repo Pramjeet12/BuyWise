@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShopGenie | Conversational Product Recommendation System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+    <div class="bg-orb orb-one"></div>
+    <div class="bg-orb orb-two"></div>
+    <div class="bg-grid"></div>
+
+    <main class="shell">
+        <section class="brand-panel">
+            <p class="kicker">AI Commerce Assistant</p>
+            <h1>ShopGenie</h1>
+            <p class="tagline">Conversational Product Recommendation System</p>
+            <p class="description">
+                Ask practical shopping questions from Flipkart review context and get concise, retrieval-grounded answers with conversation memory.
+            </p>
+            <div class="chips" id="quickChips">
+                <button type="button" class="chip" data-question="Suggest the best low budget bluetooth earbuds with good bass.">Low Budget Bass</button>
+                <button type="button" class="chip" data-question="Which product has better battery backup based on reviews?">Battery Backup</button>
+                <button type="button" class="chip" data-question="Give me top recommendations for calling quality.">Calling Quality</button>
+                <button type="button" class="chip" data-question="Which option gives the best overall value for money?">Value for Money</button>
+            </div>
+        </section>
+
+        <section class="chat-panel">
+            <header class="chat-header">
+                <div>
+                    <p class="chat-title">Live Assistant</p>
+                    <p class="chat-subtitle">Ask about features, value, and tradeoffs</p>
+                </div>
+                <div class="status-pill" id="statusPill">Ready</div>
+            </header>
+
+            <div id="chatWindow" class="chat-window" aria-live="polite">
+                <article class="bubble bubble-bot">
+                    <p>Hello! I am ShopGenie. Ask me for practical product recommendations from review data.</p>
+                    <time>now</time>
+                </article>
+            </div>
+
+            <form id="chatForm" class="composer">
+                <input
+                    id="chatInput"
+                    type="text"
+                    name="message"
+                    placeholder="Type your question..."
+                    autocomplete="off"
+                    required
+                />
+                <button id="sendBtn" type="submit">Send</button>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        const form = document.getElementById("chatForm");
+        const input = document.getElementById("chatInput");
+        const windowEl = document.getElementById("chatWindow");
+        const statusPill = document.getElementById("statusPill");
+        const chipContainer = document.getElementById("quickChips");
+        const sessionIdKey = "shopgenie_session_id";
+
+        function createSessionId() {
+            if (window.crypto && typeof window.crypto.randomUUID === "function") {
+                return "sg-user-" + window.crypto.randomUUID();
+            }
+            return "sg-user-" + Date.now() + "-" + Math.random().toString(36).slice(2, 10);
+        }
+
+        function getSessionId() {
+            let id = localStorage.getItem(sessionIdKey);
+            if (!id) {
+                id = createSessionId();
+                localStorage.setItem(sessionIdKey, id);
+            }
+            return id;
+        }
+
+        function clock() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        }
+
+        function pushBubble(text, role) {
+            const card = document.createElement("article");
+            card.className = "bubble " + (role === "user" ? "bubble-user" : "bubble-bot");
+
+            const paragraph = document.createElement("p");
+            paragraph.textContent = text;
+            card.appendChild(paragraph);
+
+            const stamp = document.createElement("time");
+            stamp.textContent = clock();
+            card.appendChild(stamp);
+
+            windowEl.appendChild(card);
+            windowEl.scrollTop = windowEl.scrollHeight;
+        }
+
+        async function askBot(message) {
+            statusPill.textContent = "Thinking...";
+            statusPill.classList.add("thinking");
+
+            const response = await fetch("/api/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message,
+                    session_id: getSessionId()
+                })
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || "Unable to get response.");
+            }
+            return data.answer;
+        }
+
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const text = input.value.trim();
+            if (!text) return;
+
+            pushBubble(text, "user");
+            input.value = "";
+            input.focus();
+
+            try {
+                const answer = await askBot(text);
+                pushBubble(answer, "bot");
+                statusPill.textContent = "Ready";
+                statusPill.classList.remove("thinking");
+            } catch (error) {
+                pushBubble("I hit an error: " + error.message, "bot");
+                statusPill.textContent = "Error";
+                statusPill.classList.remove("thinking");
+            }
+        });
+
+        chipContainer.addEventListener("click", (event) => {
+            const button = event.target.closest(".chip");
+            if (!button) return;
+            input.value = button.dataset.question || "";
+            input.focus();
+        });
+    </script>
+</body>
+</html>
