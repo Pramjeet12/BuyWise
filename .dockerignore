@@ -1,0 +1,10 @@
+venv
+.env
+ShopGenie.egg-info
+__pycache__/
+*.pyc
+.git
+.gitignore
+.pytest_cache/
+.mypy_cache/
+.vscode/
