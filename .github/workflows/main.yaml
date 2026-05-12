@@ -83,8 +83,7 @@ jobs:
 
       - name: Stop and remove previous container if running
         run: |
-          docker ps -q --filter "name=shopgenie" | grep -q . && docker stop shopgenie || true
-          docker ps -aq --filter "name=shopgenie" | grep -q . && docker rm -fv shopgenie || true
+          docker rm -f shopgenie || true
 
       - name: Run Docker image to serve users
         run: |
