@@ -9,6 +9,14 @@ It helps users ask natural language shopping questions like:
 
 The app retrieves relevant review context and generates concise responses through an LLM-powered chatbot.
 
+## Live Demo
+
+- http://13.53.171.232:5000/
+
+## Demo Images
+
+![ShopGenie Demo UI](assets/demo-shopgenie.png)
+
 ## Project Highlights
 
 - Complete RAG pipeline from raw CSV to final answer generation.
@@ -172,7 +180,7 @@ Run container:
 docker run -p 5000:5000 --env-file .env shopgenie:latest
 ```
 
-## AWS EC2 Deployment Overview
+## AWS EC2 Deployment 
 
 1. Launch an EC2 instance.
 2. Allow inbound traffic on app port (for example, 5000).
